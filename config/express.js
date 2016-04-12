@@ -5,7 +5,7 @@ var config = require('./config'),
     compress = require('compression'),
     bodyParser = require('body-parser'),
     session = require('express-session'),
-    methodOverride = require('method-override') ;
+    methodOverride = require('method-override');
 
 //render and return index
 module.exports = function() {
@@ -32,7 +32,10 @@ module.exports = function() {
   app.set('views', './app/views');
   app.set('view engine', 'ejs');
 
+  //Routes
   require('../app/routes/index.server.routes.js')(app);
+  require('../app/routes/users.server.routes.js')(app);
+
   app.use(express.static('./public'));
   return app;
 }
