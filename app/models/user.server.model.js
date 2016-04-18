@@ -1,4 +1,5 @@
 var mongoose = require('mongoose'),
+    crypto = require('crypto'),
     Schema = mongoose.Schema;
 
 var UserSchema = new Schema({
@@ -7,13 +8,13 @@ var UserSchema = new Schema({
   email: {
     type: String,
     index: true,
-    match: /.+\@.+\..+/
+    match: [/.+\@.+\..+/, "Enter valid email"]
   },
   username : {
     type: String,
     trim: true,
     unique: true,
-    required: true
+    required: 'Username is required'
   },
   role : {
     type : String,
@@ -28,6 +29,15 @@ var UserSchema = new Schema({
         'Passwords must be at least 6 characters'
      ]
   },
+  salt : {
+    type: String
+  },
+  provider : {
+    type: String,
+    required: "Provider required"
+  },
+  providerId: String,
+  providerData: {},
   created : {
     type: Date,
     default: Date.now
@@ -42,13 +52,50 @@ UserSchema.virtual('fullName').get(function(){
   this.lastName = s[1] || '';
 });
 
+UserSchema.pre("save", function(next) {
+  if(this.password) {
+    this.salt = new Buffer(crypto.randomBytes(16).toString('base64'), 'base64');
+    this.password = this.hashPassword(this.password);
+  }
+  next();
+});
+
+UserSchema.methods.hashPassword = function(password) {
+  return crypto.pbkdf2Sync(password, this.salt, 10000, 64).toString('base64');
+};
+
+UserSchema.methods.authenticate = function(password) {
+  return this.password === this.hashPassword(password);
+};
+
+UserSchema.statics.findUniqueUsername = function(username, suffix, callback) {
+  var _this = this;
+  var possible = username + (suffix || '');
+
+  _this.findOne({
+    username: possible
+  }, function(err, user) {
+    if(!err) {
+      if(!user) {
+        callback(possible);
+      } else {
+        return _this.findUniqueUsername(username, (suffix || 0) + 1, callback);
+      }
+    } else {
+      callback(null);
+    }
+  });
+};
+
+UserSchema.set('toJSON', {
+  getters: true,
+  setters: true
+})
+
 UserSchema.statics.findOneByUsername = function(username, cb) {
   this.findOne({username: new RegExp(username, 'i')}, cb);
 };
 
-UserSchema.methods.authenticate = function(password) {
-  return this.password === password;
-};
 
 UserSchema.post('save', function(next){
   if(this.isNew) {
@@ -58,6 +105,5 @@ UserSchema.post('save', function(next){
   }
 });
 
-UserSchema.set('toJSON', {getters: true, virtuals : true});
 
 mongoose.model('User', UserSchema);
