@@ -21,24 +21,15 @@ module.exports = function(app) {
     res.render('index.ejs');
   });
 
-  app.get('/oauth/twitter', passport.authenticate('twitter', {
-    failureRedirect : '/signin'
-  }));
+  app.get('/auth/twitter', passport.authenticate('twitter'));
 
-  app.get('/oauth/twitter/callback',
+  app.get('/auth/twitter/callback',
     passport.authenticate('twitter', {
-      successRedirect : '/',
-      failureRedirect : '/signin',
-      failureFlash: true
-    }))
+      failureRedirect : '/signin'
+    }),function(req, res) {
+      res.redirect('/')
+    });
   
-  // app.route('/signin') 
-  //    .get(users.renderSignin) 
-  //    .post(passport.authenticate('twitter', { 
-  //     successRedirect: '/', 
-  //     failureRedirect: '/signin'
-  //   }));
-
 
   app.route('/users')
     .post(users.create)

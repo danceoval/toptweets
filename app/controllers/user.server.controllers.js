@@ -74,26 +74,14 @@ exports.signout = function(req, res) {
 }
 
 
-exports.saveOAuthUserProfile = function(req, res, done) {
-  User.findOne({
-    provider: profile.provider,
-    providerId: profile.providerId
+exports.saveOAuthUserProfile = function(req, profile, done) {
+  User.findOrCreate({
+    twitterID: profile.id
   }, function(err, user) {
     if(err) {
       return done(err);
     } else {
-      if(!user) {
-        user = new User(profile);
-
-        user.save(function(err) {
-          if(err){
-            return res.redirect('/signup');
-          }
-          return done(err, user);
-        })
-      } else {
-        return done(err, user);
-      }
+      return done(err, user);
     }
   })
 };

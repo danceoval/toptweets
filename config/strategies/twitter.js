@@ -5,12 +5,12 @@ var passport = require('passport'),
     users = require('../../app/controllers/user.server.controllers'); 
 
 module.exports = function() { 
-    passport.use( new TwitterStrategy({ 
+    passport.use(new TwitterStrategy({ 
         consumerKey: config.twitter.clientID, 
         consumerSecret: config.twitter.clientSecret, 
         callbackURL: config.twitter.callbackURL, 
         passReqToCallback: true 
-    }, function( req, token, tokenSecret, profile, done) { 
+    }, function(token, tokenSecret, profile, done) { 
         var providerData = profile._json; 
         providerData.token = token; 
         providerData.tokenSecret = tokenSecret; 
@@ -23,7 +23,7 @@ module.exports = function() {
             providerData: providerData
         };
 
-        users.saveOAuthUserProfile(req, providerUserProfile, done);
+        users.saveOAuthUserProfile(req, profile, done);
     }));
 };
 
